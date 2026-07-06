@@ -4,7 +4,7 @@
 
 // --- Game Data & Configuration ---
 const CAREER_LEVELS = [
-  { name: "무직 (구직 중)", salary: 0, stressRate: 0.2, promoCost: 8000 },
+  { name: "현재 삼식이", salary: 0, stressRate: 0.2, promoCost: 8000 },
   { name: "회사원 (사원)", salary: 1200, stressRate: 0.6, promoCost: 20000 },
   { name: "회사원 (대리)", salary: 3500, stressRate: 0.9, promoCost: 80000 },
   { name: "회사원 (과장)", salary: 9000, stressRate: 1.3, promoCost: 280000 },

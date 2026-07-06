@@ -4,12 +4,13 @@
 
 // --- Game Data & Configuration ---
 const CAREER_LEVELS = [
-  { name: "회사원 (사원)", salary: 1000, stressRate: 0.5, promoCost: 15000 },
-  { name: "회사원 (대리)", salary: 3000, stressRate: 0.8, promoCost: 70000 },
-  { name: "회사원 (과장)", salary: 8000, stressRate: 1.2, promoCost: 250000 },
-  { name: "회사원 (차장)", salary: 20000, stressRate: 1.8, promoCost: 900000 },
-  { name: "회사원 (부장)", salary: 50000, stressRate: 2.6, promoCost: 3500000 },
-  { name: "회사원 (임원)", salary: 150000, stressRate: 4.0, promoCost: Infinity }
+  { name: "무직 (구직 중)", salary: 0, stressRate: 0.2, promoCost: 8000 },
+  { name: "회사원 (사원)", salary: 1200, stressRate: 0.6, promoCost: 20000 },
+  { name: "회사원 (대리)", salary: 3500, stressRate: 0.9, promoCost: 80000 },
+  { name: "회사원 (과장)", salary: 9000, stressRate: 1.3, promoCost: 280000 },
+  { name: "회사원 (차장)", salary: 22000, stressRate: 1.9, promoCost: 1000000 },
+  { name: "회사원 (부장)", salary: 55000, stressRate: 2.7, promoCost: 3800000 },
+  { name: "회사원 (임원)", salary: 160000, stressRate: 4.2, promoCost: Infinity }
 ];
 
 const UPGRADES_CONFIG = {
@@ -59,13 +60,80 @@ const QUESTS_CONFIG = [
   {
     id: "lupang",
     name: "회사에서 눈치 보며 루팡짓하기",
-    desc: "모니터 뒤에서 엑셀 켜놓고 웹서핑을 합니다.",
+    desc: "모니터 뒤에서 엑셀 켜놓고 웹서핑을 합니다. (직장인 전용)",
     duration: 3, // 초
     rewardMoney: 1500, // 기본 보상 (직급 및 배율 반영됨)
     rewardHarmony: -1,
     rewardStress: 4,
     costMoney: 0,
     icon: "💼"
+  },
+  {
+    id: "part_eyes",
+    name: "인형 눈알 붙이기 부업",
+    desc: "온 가족이 옹기종기 모여 앉아 밤새 인형 눈알을 붙입니다.",
+    duration: 2,
+    rewardMoney: 500,
+    rewardHarmony: 1,
+    rewardStress: 2,
+    costMoney: 0,
+    icon: "👁️"
+  },
+  {
+    id: "part_delivery",
+    name: "배민 도보 배달 알바",
+    desc: "골목길을 열심히 뛰며 따끈한 떡볶이를 전달합니다.",
+    duration: 5,
+    rewardMoney: 3200,
+    rewardHarmony: 3, // 아내가 운동된다며 흡족해함
+    rewardStress: 6,
+    costMoney: 0,
+    icon: "🚶"
+  },
+  {
+    id: "part_conveni",
+    name: "편의점 주말 야간 대타 알바",
+    desc: "야간 취객의 진상을 상대하며 편의점 매대를 정리합니다.",
+    duration: 9,
+    rewardMoney: 9500,
+    rewardHarmony: -3,
+    rewardStress: 14,
+    costMoney: 0,
+    icon: "🏪"
+  },
+  {
+    id: "part_heavy",
+    name: "쿠팡 물류창고 야간 상하차",
+    desc: "쉴 새 없이 쏟아지는 지옥의 무거운 택배 상자를 적재합니다.",
+    duration: 14,
+    rewardMoney: 19000,
+    rewardHarmony: -5,
+    rewardStress: 26,
+    costMoney: 0,
+    icon: "📦"
+  },
+  // 장기 프로젝트 아르바이트
+  {
+    id: "proj_scrdoor",
+    name: "[장기] 지하철 스크린도어 심야 정비",
+    desc: "막차가 끊긴 선로로 내려가 안전 헬멧을 쓰고 문을 정비합니다. (장기 알바)",
+    duration: 45, // 45초 소요
+    rewardMoney: 85000,
+    rewardHarmony: 10, // 남편의 성실한 노동에 아내가 감동
+    rewardStress: 35,
+    costMoney: 0,
+    icon: "🛠️"
+  },
+  {
+    id: "proj_anchovy",
+    name: "[장기] 남해 멸치잡이 그물 수확선 탑승",
+    desc: "거친 바다로 나가 며칠 동안 그물을 당기며 멸치를 털어냅니다. (장기 알바)",
+    duration: 90, // 90초 소요
+    rewardMoney: 220000,
+    rewardHarmony: -18, // 며칠씩 집을 비우자 아내 분노
+    rewardStress: 55,
+    costMoney: 0,
+    icon: "🚢"
   },
   {
     id: "rest",
@@ -186,8 +254,8 @@ let state = {
   harmony: 100,
   careerIndex: 0,
   kids: {
-    son: { affinity: 50, status: "롤 랭크전 연패 중" },
-    daughter: { affinity: 50, status: "숏폼 댄스 챌린지 시청 중" }
+    son: { affinity: 50, status: "수능 디데이 카운트다운 보며 멍때리는 중" },
+    daughter: { affinity: 50, status: "대학교 축제 라인업 구경 중" }
   },
   upgrades: {
     sofa: 0,
@@ -483,16 +551,32 @@ function renderPromotionCard() {
   const nextLevel = CAREER_LEVELS[nextLevelIndex];
   const canAfford = state.money >= nextLevel.promoCost;
 
-  container.innerHTML = `
-    <div class="shop-card-info">
-      <h4>${nextLevel.name} 승진 시험</h4>
-      <p>급여: 초당 ${formatKoreanMoney(nextLevel.salary)} | 스트레스 증가: +${nextLevel.stressRate}/초</p>
-      <p class="cost font-outfit">요구 비용: ${formatKoreanMoney(nextLevel.promoCost)}</p>
-    </div>
-    <button class="btn btn-primary" id="btn-promote" ${canAfford ? "" : "disabled"}>
-      승진하기 💼
-    </button>
-  `;
+  if (state.careerIndex === 0) {
+    // 무직 상태일 때는 취업 지원
+    container.innerHTML = `
+      <div class="shop-card-info">
+        <h4>💼 정규직 대기업 공채 신입사원 지원</h4>
+        <p>서류 전형 및 실무 면접에 응시합니다. (합격 확률: 15%)</p>
+        <p>합격 시: 회사 루팡 퀘스트 해금 & 초당 월급 입금 시작!</p>
+        <p class="cost font-outfit">이력서 지원비: ${formatKoreanMoney(nextLevel.promoCost)}</p>
+      </div>
+      <button class="btn btn-primary" id="btn-promote" ${canAfford ? "" : "disabled"}>
+        입사 지원서 제출 📄
+      </button>
+    `;
+  } else {
+    // 직장인일 때는 승진 시험
+    container.innerHTML = `
+      <div class="shop-card-info">
+        <h4>${nextLevel.name} 승진 시험</h4>
+        <p>급여: 초당 ${formatKoreanMoney(nextLevel.salary)} | 스트레스 증가: +${nextLevel.stressRate}/초</p>
+        <p class="cost font-outfit">요구 비용: ${formatKoreanMoney(nextLevel.promoCost)}</p>
+      </div>
+      <button class="btn btn-primary" id="btn-promote" ${canAfford ? "" : "disabled"}>
+        승진하기 💼
+      </button>
+    `;
+  }
 
   // Bind click
   const btn = document.getElementById('btn-promote');
@@ -508,10 +592,28 @@ function buyPromotion() {
   const nextLevel = CAREER_LEVELS[nextLevelIndex];
   if (state.money >= nextLevel.promoCost) {
     state.money -= nextLevel.promoCost;
-    state.careerIndex = nextLevelIndex;
-    playSound('promo');
-    writeLog(`승진 성공! 이제부터 [${nextLevel.name}]로서 더 높은 월급을 받지만, 스트레스도 가속됩니다.`, "earn");
-    showToast(`${nextLevel.name} 승진 성공!`, "success");
+    
+    if (state.careerIndex === 0) {
+      // 무직에서 사원 취업 도전 (15% 확률)
+      const roll = Math.random();
+      if (roll <= 0.15) {
+        state.careerIndex = nextLevelIndex;
+        playSound('promo');
+        writeLog(`🎉 취업 대성공! 드디어 [${nextLevel.name}]으로 정규직 입사에 성공했습니다! 이제부터 월급이 꼬박꼬박 꽂힙니다.`, "earn");
+        showToast("정규직 취업 성공! 🎉", "success");
+      } else {
+        playSound('fail');
+        state.stress = Math.min(100, state.stress + 15);
+        writeLog(`❌ 입사 전형 탈락... 면접관들의 차가운 질문에 멘탈이 흔들려 피로가 쌓입니다. (스트레스 +15)`, "danger");
+        showToast("탈락... 다음 기회에 😭", "error");
+      }
+    } else {
+      // 일반 승진
+      state.careerIndex = nextLevelIndex;
+      playSound('promo');
+      writeLog(`승진 성공! 이제부터 [${nextLevel.name}]로서 더 높은 월급을 받지만, 스트레스도 가속됩니다.`, "earn");
+      showToast(`${nextLevel.name} 승진 성공!`, "success");
+    }
     renderUI();
   }
 }
@@ -599,6 +701,30 @@ function renderQuests() {
     // Check if quest is running
     const isRunning = runningQuests[quest.id] !== undefined;
 
+    // Check if locked for Unemployed
+    const isLockedForUnemployed = quest.id === 'lupang' && state.careerIndex === 0;
+
+    let btnHtml = "";
+    if (isLockedForUnemployed) {
+      btnHtml = `
+        <button class="btn btn-primary" disabled style="opacity: 0.6;">
+          직장인 전용 💼
+        </button>
+      `;
+    } else if (quest.id === 'stealth_hide') {
+      btnHtml = `
+        <button class="btn btn-danger btn-start-quest" data-quest="${quest.id}">
+          비상금 숨기기 🤫
+        </button>
+      `;
+    } else {
+      btnHtml = `
+        <button class="btn btn-primary btn-start-quest" data-quest="${quest.id}" ${(!isRunning && canAfford) ? "" : "disabled"}>
+          ${isRunning ? "진행 중..." : "행동하기 🏃"}
+        </button>
+      `;
+    }
+
     card.innerHTML = `
       <div class="quest-top">
         <div>
@@ -612,15 +738,7 @@ function renderQuests() {
         </div>
         
         <div class="quest-actions-btn-group">
-          ${quest.id === 'stealth_hide' ? `
-            <button class="btn btn-danger btn-start-quest" data-quest="${quest.id}">
-              비상금 숨기기 🤫
-            </button>
-          ` : `
-            <button class="btn btn-primary btn-start-quest" data-quest="${quest.id}" ${(!isRunning && canAfford) ? "" : "disabled"}>
-              ${isRunning ? "진행 중..." : "행동하기 🏃"}
-            </button>
-          `}
+          ${btnHtml}
         </div>
       </div>
       <div class="quest-actions">
@@ -658,6 +776,12 @@ function getQuestMoneyReward(quest) {
 }
 
 function startQuest(questId) {
+  if (questId === 'lupang' && state.careerIndex === 0) {
+    showToast("무직 상태에서는 회사 루팡짓을 할 수 없습니다!", "error");
+    playSound('fail');
+    return;
+  }
+
   const quest = QUESTS_CONFIG.find(q => q.id === questId);
   if (!quest) return;
 
@@ -800,7 +924,7 @@ function givePocketMoney(kid, amount) {
 
   state.kids[kid].affinity = Math.min(100, state.kids[kid].affinity + affinityGain);
 
-  const kidNameStr = kid === 'son' ? '아들 철수' : '딸 영희';
+  const kidNameStr = kid === 'son' ? '아들 민돌이' : '딸 뿡수니';
   writeLog(`${kidNameStr}에게 용돈 ${formatKoreanMoney(amount)}을(를) 주었습니다. 친밀도가 ${affinityGain} 올랐습니다.`, "family");
   showToast(`${kidNameStr} 친밀도 +${affinityGain}!`, "success");
 
@@ -813,9 +937,9 @@ function givePocketMoney(kid, amount) {
 
   // Kid quick response status updates
   if (amount === 50000) {
-    state.kids[kid].status = kid === 'son' ? "아빠가 최고라며 어깨 주무르는 중" : "엄마한테 아빠 칭찬 시전 중";
+    state.kids[kid].status = kid === 'son' ? "갑자기 공부 모드로 책상에 앉음" : "전공 서적 제본 완료 후 환하게 웃음";
   } else {
-    state.kids[kid].status = kid === 'son' ? "과자 사 먹으러 PC방 탈출" : "행복한 얼굴로 멜론 차트 듣는 중";
+    state.kids[kid].status = kid === 'son' ? "스마트 스터디 카페 6시간 연장권 충전" : "선배들과 단체 톡방에 밥약 완료 인증샷 전송";
   }
 
   renderUI();
@@ -878,7 +1002,7 @@ function triggerSonPocketRequest() {
   const reqAmount = getCalculatedPocketRequest();
   const avatar = "👦";
   const title = "아들의 요구";
-  const desc = `"아빠... 친구들이랑 다같이 이번에 나온 모바일 게임 유료 패키지 지르기로 했는데... 딱 ${formatKoreanMoney(reqAmount)}만 주면 안 돼? 진짜 안 피씨방 갈게!"`;
+  const desc = `"아빠... 고3 수험생활이 너무 팍팍해. 친구들이랑 수능 대박 기원 독서실 패스 끊어야 하는데... 딱 ${formatKoreanMoney(reqAmount)}만 보태주면 안 돼? 진짜 열심히 할게!"`;
 
   showModal(title, "🚨", desc, avatar, [
     {
@@ -890,12 +1014,12 @@ function triggerSonPocketRequest() {
           const courseBuff = 1 + UPGRADES_CONFIG.talkCourse.effect(state.upgrades.talkCourse);
           const gain = Math.floor(18 * courseBuff);
           state.kids.son.affinity = Math.min(100, state.kids.son.affinity + gain);
-          state.kids.son.status = "아빠 덕분에 풀초월 달성하고 환호 중";
+          state.kids.son.status = "1타 강사 패키지 결제하고 공부 자극받는 중";
           
           // Son specialty: instant stress relief
           state.stress = Math.max(0, state.stress - 20);
           
-          writeLog(`아들에게 용돈을 쾌척했습니다! 아빠의 피로가 사르르 녹아내립니다 (스트레스 -20, 친밀도 +${gain})`, "family");
+          writeLog(`민돌이에게 용돈을 쾌척했습니다! 아빠의 피로가 사르르 녹아내립니다 (스트레스 -20, 친밀도 +${gain})`, "family");
           showToast("아들 용돈 주기 성공!", "success");
         } else {
           // Fallback to refuse if money was spent while modal was open
@@ -915,8 +1039,8 @@ function refuseSonRequest() {
   state.kids.son.affinity = Math.max(0, state.kids.son.affinity - 12);
   state.stress = Math.min(100, state.stress + 5);
   state.kids.son.status = "방 문 쾅 닫고 들어감";
-  writeLog("아들의 요구를 냉정히 묵살했습니다. 아들이 토라졌습니다. (친밀도 -12, 스트레스 +5)", "danger");
-  showToast("아들이 토라졌습니다.", "warning");
+  writeLog("민돌이의 요구를 냉정히 묵살했습니다. 민돌이가 토라졌습니다. (친밀도 -12, 스트레스 +5)", "danger");
+  showToast("민돌이가 토라졌습니다.", "warning");
   renderUI();
 }
 
@@ -924,7 +1048,7 @@ function triggerDaughterPocketRequest() {
   const reqAmount = getCalculatedPocketRequest();
   const avatar = "👧";
   const title = "딸의 은밀한 요구";
-  const desc = `"아빠... 내가 진짜 진짜 가지고 싶었던 아이돌 응원봉이랑 굿즈가 새로 나왔어... 딱 ${formatKoreanMoney(reqAmount)}만 빌려줘. 대학 가면 꼭 갚을게! 응? 응?"`;
+  const desc = `"아빠... 이번 학기 전공 책값이 생각보다 너무 많이 나왔네... 개강 총회 회비도 내야 하고... 딱 ${formatKoreanMoney(reqAmount)}만 급전 융통 안 될까? 헤헤..."`;
 
   showModal(title, "🚨", desc, avatar, [
     {
@@ -936,12 +1060,12 @@ function triggerDaughterPocketRequest() {
           const courseBuff = 1 + UPGRADES_CONFIG.talkCourse.effect(state.upgrades.talkCourse);
           const gain = Math.floor(18 * courseBuff);
           state.kids.daughter.affinity = Math.min(100, state.kids.daughter.affinity + gain);
-          state.kids.daughter.status = "굿즈 선예약 성공하고 아빠 최고 외치는 중";
+          state.kids.daughter.status = "전공책 제본하고 조별과제 캐리 중";
           
           // Daughter specialty: wife defense shield buff increment
           state.harmony = Math.min(100, state.harmony + 15);
           
-          writeLog(`딸에게 흔쾌히 지갑을 열었습니다! 딸이 엄마의 신경을 다른 데로 돌립니다 (평화도 +15, 친밀도 +${gain})`, "family");
+          writeLog(`뿡수니에게 흔쾌히 지갑을 열었습니다! 딸이 엄마의 신경을 다른 데로 돌립니다 (평화도 +15, 친밀도 +${gain})`, "family");
           showToast("딸의 잔소리 쉴드 작동!", "success");
         } else {
           refuseDaughterRequest();
@@ -960,8 +1084,8 @@ function refuseDaughterRequest() {
   state.kids.daughter.affinity = Math.max(0, state.kids.daughter.affinity - 12);
   state.stress = Math.min(100, state.stress + 5);
   state.kids.daughter.status = "눈을 흘기며 엄마 방으로 들어감";
-  writeLog("딸의 투정을 단호하게 쳐냈습니다. 딸이 아빠를 투명인간 취급하기 시작했습니다. (친밀도 -12, 스트레스 +5)", "danger");
-  showToast("딸이 삐졌습니다.", "warning");
+  writeLog("뿡수니의 투정을 단호하게 쳐냈습니다. 뿡수니가 아빠를 투명인간 취급하기 시작했습니다. (친밀도 -12, 스트레스 +5)", "danger");
+  showToast("뿡수니가 삐졌습니다.", "warning");
   renderUI();
 }
 
@@ -1183,8 +1307,8 @@ function gameTick() {
 }
 
 function updateKidStatusses() {
-  const sonStatuses = ["롤 칼바람 나락에서 정치질 중", "유튜브 쇼츠 무한 스크롤 중", "방에서 과자 부스러기 흘리는 중", "시험 성적표 숨길 방법 궁리 중"];
-  const daughterStatuses = ["인스타 필터 셀카 촬영 중", "스터디윗미 방송 켜놓고 폰 보기", "아이돌 앨범 깡깡이 중", "친구들과 카카오톡 단체방 정담 중"];
+  const sonStatuses = ["수능 대비 1타 강사 교재 펴두고 조는 중", "스터디 카페 사물함에 간식 숨겨두는 중", "수시 원서 어디 쓸지 눈치싸움 중", "몰래 롤토체스 돌리는 중"];
+  const daughterStatuses = ["다음 학기 수강 신청 대참사 복구 중", "대학 동기들과 잔디밭에서 배달 떡볶이 흡입 중", "대외활동 자소서 쓰는 척 인스타 켜는 중", "학생회실 구석에서 동기 뒷담 대화 중"];
   
   if (Math.random() < 0.15) {
     state.kids.son.status = sonStatuses[Math.floor(Math.random() * sonStatuses.length)];
